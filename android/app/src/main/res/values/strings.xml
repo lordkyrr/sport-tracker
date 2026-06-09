@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Suivi Sportif</string>
+    <string name="title_activity_main">Suivi Sportif</string>
+    <string name="package_name">com.sportracker.app</string>
+    <string name="custom_url_scheme">com.sportracker.app</string>
+</resources>
