@@ -1,41 +1,45 @@
-import { fmtSec } from "../lib/utils";
+import { useMemo } from "react";
+import { fmtSec, getTodayKey } from "../lib/utils";
+import { SectionLabel } from "../components/SectionLabel";
 
 export function StatsScreen({ sessions, program }) {
-  const today = new Date().toISOString().split("T")[0];
+  const today = getTodayKey();
 
-  const last14 = Array.from({ length: 14 }, (_, i) => {
-    const d = new Date();
-    d.setHours(12, 0, 0, 0);
-    d.setDate(d.getDate() - (13 - i));
-    return d.toISOString().split("T")[0];
-  });
+  const { last14, streak, sessionsThisWeek } = useMemo(() => {
+    const days = Array.from({ length: 14 }, (_, i) => {
+      const d = new Date();
+      d.setHours(12, 0, 0, 0);
+      d.setDate(d.getDate() - (13 - i));
+      return d.toISOString().split("T")[0];
+    });
 
-  const sortedKeys = Object.keys(sessions).sort((a, b) => b.localeCompare(a));
-  let streak = 0;
-  let prevKey = today;
-  for (const key of sortedKeys) {
-    if (key > today) continue;
-    const expected = new Date(prevKey + "T12:00:00");
-    expected.setDate(expected.getDate() - 1);
-    if (key !== expected.toISOString().split("T")[0]) break;
-    const s = sessions[key];
-    if (s.type === "dynamique" || s.type === "statique") {
-      streak++;
-      prevKey = key;
-    } else {
-      break;
+    const sortedKeys = Object.keys(sessions).sort((a, b) => b.localeCompare(a));
+    let s = 0;
+    let prevKey = today;
+    for (const key of sortedKeys) {
+      if (key > today) continue;
+      const expected = new Date(prevKey + "T12:00:00");
+      expected.setDate(expected.getDate() - 1);
+      if (key !== expected.toISOString().split("T")[0]) break;
+      const sess = sessions[key];
+      if (sess.type === "dynamique" || sess.type === "statique") {
+        s++;
+        prevKey = key;
+      } else { break; }
     }
-  }
 
-  const weekStart = new Date();
-  weekStart.setHours(0, 0, 0, 0);
-  const dow = weekStart.getDay();
-  weekStart.setDate(weekStart.getDate() - (dow === 0 ? 6 : dow - 1));
-  const weekStartKey = weekStart.toISOString().split("T")[0];
-  const sessionsThisWeek = Object.keys(sessions).filter(d =>
-    d >= weekStartKey && d <= today &&
-    (sessions[d].type === "dynamique" || sessions[d].type === "statique")
-  ).length;
+    const weekStart = new Date();
+    weekStart.setHours(0, 0, 0, 0);
+    const dow = weekStart.getDay();
+    weekStart.setDate(weekStart.getDate() - (dow === 0 ? 6 : dow - 1));
+    const weekStartKey = weekStart.toISOString().split("T")[0];
+    const weekCount = Object.keys(sessions).filter(d =>
+      d >= weekStartKey && d <= today &&
+      (sessions[d].type === "dynamique" || sessions[d].type === "statique")
+    ).length;
+
+    return { last14: days, streak: s, sessionsThisWeek: weekCount };
+  }, [sessions, today]);
 
   return (
     <div style={{ padding: "32px 16px 0" }}>
@@ -137,16 +141,6 @@ function BarChart({ label, color, points, dates, targetLine, formatValue }) {
           ))}
         </div>
       )}
-    </div>
-  );
-}
-
-function SectionLabel({ text }) {
-  return (
-    <div style={{ marginBottom: 10, marginTop: 16, display: "flex", alignItems: "center", gap: 10 }}>
-      <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)" }} />
-      <span style={{ fontWeight: 800, fontSize: 11, letterSpacing: 3, color: "rgba(255,255,255,0.35)", textTransform: "uppercase" }}>{text}</span>
-      <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)" }} />
     </div>
   );
 }

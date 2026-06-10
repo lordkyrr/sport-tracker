@@ -1,4 +1,4 @@
-const DAY_TYPES = [
+export const DAY_TYPES = [
   { id: "dynamique", label: "Dynamique", color: "#f97316" },
   { id: "statique",  label: "Statique",  color: "#8b5cf6" },
   { id: "repos",     label: "Repos",     color: "#6366f1" },

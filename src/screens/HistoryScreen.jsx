@@ -1,22 +1,9 @@
 import { useState } from "react";
-import { formatDate, fmtSec } from "../lib/utils";
-
-const DAY_TYPE_COLORS = {
-  dynamique: "#f97316",
-  statique:  "#8b5cf6",
-  repos:     "#6366f1",
-  match:     "#10b981",
-};
-
-const DAY_TYPE_LABELS = {
-  dynamique: "Dynamique",
-  statique:  "Statique",
-  repos:     "Repos",
-  match:     "Match",
-};
+import { formatDate, fmtSec, getTodayKey } from "../lib/utils";
+import { DAY_TYPES } from "../components/DayTypePills";
 
 export function HistoryScreen({ sessions, program }) {
-  const today = new Date().toISOString().split("T")[0];
+  const today = getTodayKey();
   const days = Object.keys(sessions)
     .filter(d => d !== today)
     .sort((a, b) => b.localeCompare(a));
@@ -42,9 +29,11 @@ export function HistoryScreen({ sessions, program }) {
 
 function HistoryDay({ dateKey, session, program }) {
   const [open, setOpen] = useState(false);
-  const color = DAY_TYPE_COLORS[session.type] || "#fff";
-  const label = DAY_TYPE_LABELS[session.type] || session.type;
+  const dayType = DAY_TYPES.find(dt => dt.id === session.type) || { color: "#fff", label: session.type };
   const isRestOrMatch = session.type === "repos" || session.type === "match";
+  const isDynamic = session.type === "dynamique";
+  const exList = isDynamic ? program.A : program.B;
+  const fmtTotal = isDynamic ? (n) => `${n} reps` : fmtSec;
 
   return (
     <div style={{
@@ -63,40 +52,28 @@ function HistoryDay({ dateKey, session, program }) {
         </span>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           <span style={{
-            background: `${color}20`,
-            border: `1px solid ${color}40`,
+            background: `${dayType.color}20`,
+            border: `1px solid ${dayType.color}40`,
             borderRadius: 20,
             padding: "2px 10px",
             fontSize: 11,
-            color,
+            color: dayType.color,
             fontWeight: 700,
-          }}>{label}</span>
+          }}>{dayType.label}</span>
           <span style={{ color: "rgba(255,255,255,0.4)", fontSize: 14 }}>{open ? "▲" : "▼"}</span>
         </div>
       </div>
 
       {open && !isRestOrMatch && (
         <div style={{ padding: "0 18px 14px", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-          {session.type === "dynamique" && program.A.map(e => {
+          {exList.map(e => {
             const log = (session.exercises || {})[e.id] || [];
             if (!log.length) return null;
             return (
               <div key={e.id} style={{ display: "flex", justifyContent: "space-between", marginTop: 8 }}>
                 <span style={{ color: "rgba(255,255,255,0.55)", fontSize: 13 }}>{e.label}</span>
                 <span style={{ color: e.color, fontSize: 12, fontWeight: 700 }}>
-                  {log.reduce((a, b) => a + b, 0)} reps
-                </span>
-              </div>
-            );
-          })}
-          {session.type === "statique" && program.B.map(e => {
-            const log = (session.exercises || {})[e.id] || [];
-            if (!log.length) return null;
-            return (
-              <div key={e.id} style={{ display: "flex", justifyContent: "space-between", marginTop: 8 }}>
-                <span style={{ color: "rgba(255,255,255,0.55)", fontSize: 13 }}>{e.label}</span>
-                <span style={{ color: e.color, fontSize: 12, fontWeight: 700 }}>
-                  {fmtSec(log.reduce((a, b) => a + b, 0))}
+                  {fmtTotal(log.reduce((a, b) => a + b, 0))}
                 </span>
               </div>
             );

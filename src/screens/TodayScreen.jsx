@@ -1,17 +1,11 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { getTodayKey, formatDate } from "../lib/utils";
 import { suggestDay } from "../lib/suggestion";
-import { DayTypePills } from "../components/DayTypePills";
+import { DayTypePills, DAY_TYPES } from "../components/DayTypePills";
 import { RepExercise } from "../components/exercises/RepExercise";
 import { TimeExercise } from "../components/exercises/TimeExercise";
 import { CardioSelector } from "../components/CardioSelector";
-
-const DAY_TYPE_COLORS = {
-  dynamique: "#f97316",
-  statique:  "#8b5cf6",
-  repos:     "#6366f1",
-  match:     "#10b981",
-};
+import { SectionLabel } from "../components/SectionLabel";
 
 export function TodayScreen({ sessions, saveSession, deleteSession, program, onOpenConfig }) {
   const today = getTodayKey();
@@ -19,10 +13,17 @@ export function TodayScreen({ sessions, saveSession, deleteSession, program, onO
   const isToday = selectedDate === today;
 
   const session = sessions[selectedDate] || {};
-  const suggestion = suggestDay(sessions);
+  const suggestion = useMemo(() => suggestDay(sessions), [sessions]);
   const sessionType = session.type || suggestion.type;
   const exercises = session.exercises || {};
   const cardio = session.cardio || [];
+
+  const isRest = sessionType === "repos";
+  const isMatch = sessionType === "match";
+  const isRestOrMatch = isRest || isMatch;
+  const isDynamic = sessionType === "dynamique";
+
+  const suggestionColor = DAY_TYPES.find(dt => dt.id === suggestion.type)?.color;
 
   const setType = (type) => {
     const hasData = Object.values(exercises).some(arr => arr.length > 0) || cardio.length > 0;
@@ -64,11 +65,9 @@ export function TodayScreen({ sessions, saveSession, deleteSession, program, onO
   };
 
   const showSuggestion = isToday && !session.type;
-  const isRestOrMatch = sessionType === "repos" || sessionType === "match";
 
   return (
     <div>
-      {/* Header */}
       <div style={{
         padding: "32px 20px 16px",
         background: "linear-gradient(180deg, #111118 0%, transparent 100%)",
@@ -108,7 +107,6 @@ export function TodayScreen({ sessions, saveSession, deleteSession, program, onO
           </div>
         </div>
 
-        {/* Day navigation */}
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12 }}>
           <button onClick={goToPrevDay} style={{ background: "rgba(255,255,255,0.07)", border: "none", borderRadius: 8, color: "#fff", fontSize: 18, width: 32, height: 32, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>‹</button>
           <div style={{ flex: 1, textAlign: "center", fontSize: 12, color: isToday ? "#fff" : "rgba(255,165,0,0.9)", fontWeight: 700 }}>
@@ -117,33 +115,30 @@ export function TodayScreen({ sessions, saveSession, deleteSession, program, onO
           <button onClick={goToNextDay} style={{ background: isToday ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.07)", border: "none", borderRadius: 8, color: isToday ? "rgba(255,255,255,0.2)" : "#fff", fontSize: 18, width: 32, height: 32, cursor: isToday ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>›</button>
         </div>
 
-        {/* Suggestion badge */}
         {showSuggestion && (
-          <div style={{ marginTop: 10, display: "inline-flex", alignItems: "center", gap: 6, background: `${DAY_TYPE_COLORS[suggestion.type]}15`, border: `1px solid ${DAY_TYPE_COLORS[suggestion.type]}30`, borderRadius: 20, padding: "4px 12px" }}>
-            <div style={{ width: 5, height: 5, borderRadius: "50%", background: DAY_TYPE_COLORS[suggestion.type], flexShrink: 0 }} />
+          <div style={{ marginTop: 10, display: "inline-flex", alignItems: "center", gap: 6, background: `${suggestionColor}15`, border: `1px solid ${suggestionColor}30`, borderRadius: 20, padding: "4px 12px" }}>
+            <div style={{ width: 5, height: 5, borderRadius: "50%", background: suggestionColor, flexShrink: 0 }} />
             <span style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", fontWeight: 600 }}>
               {suggestion.type.charAt(0).toUpperCase() + suggestion.type.slice(1)} suggéré · {suggestion.reason}
             </span>
           </div>
         )}
 
-        {/* Day type pills */}
         <div style={{ marginTop: 12 }}>
           <DayTypePills selected={sessionType} onChange={setType} />
         </div>
       </div>
 
-      {/* Content */}
       <div style={{ padding: "8px 16px" }}>
         {isRestOrMatch ? (
           <div style={{ textAlign: "center", padding: "60px 0" }}>
             <div style={{ fontSize: 64, marginBottom: 16 }}>
-              {sessionType === "repos" ? "😴" : "🎾"}
+              {isRest ? "😴" : "🎾"}
             </div>
             <div style={{ fontSize: 18, fontWeight: 800, color: "rgba(255,255,255,0.6)" }}>
-              {sessionType === "repos" ? "Jour de repos" : "Match de tennis"}
+              {isRest ? "Jour de repos" : "Match de tennis"}
             </div>
-            {sessionType === "repos" && (
+            {isRest && (
               <div style={{ fontSize: 13, marginTop: 8, color: "rgba(255,255,255,0.25)" }}>
                 Récupération — c'est là que les muscles se construisent
               </div>
@@ -151,8 +146,8 @@ export function TodayScreen({ sessions, saveSession, deleteSession, program, onO
           </div>
         ) : (
           <>
-            <SectionLabel text={sessionType === "dynamique" ? "Section A — Répétitions" : "Section B — Isométrie"} />
-            {sessionType === "dynamique"
+            <SectionLabel text={isDynamic ? "Section A — Répétitions" : "Section B — Isométrie"} />
+            {isDynamic
               ? program.A.map(e => (
                   <RepExercise key={e.id} exercise={e} log={exercises[e.id] || []} onAdd={(v) => addRep(e.id, v)} />
                 ))
@@ -165,18 +160,6 @@ export function TodayScreen({ sessions, saveSession, deleteSession, program, onO
           </>
         )}
       </div>
-    </div>
-  );
-}
-
-function SectionLabel({ text }) {
-  return (
-    <div style={{ marginBottom: 12, marginTop: 16, display: "flex", alignItems: "center", gap: 10 }}>
-      <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)" }} />
-      <span style={{ fontWeight: 800, fontSize: 11, letterSpacing: 3, color: "rgba(255,255,255,0.35)", textTransform: "uppercase" }}>
-        {text}
-      </span>
-      <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)" }} />
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 
 export function useStorage(key, defaultValue) {
   const [value, setValue] = useState(() => {
@@ -10,7 +10,7 @@ export function useStorage(key, defaultValue) {
     }
   });
 
-  const set = (newValue) => {
+  const set = useCallback((newValue) => {
     setValue(prev => {
       const resolved = typeof newValue === "function" ? newValue(prev) : newValue;
       try {
@@ -18,7 +18,7 @@ export function useStorage(key, defaultValue) {
       } catch {}
       return resolved;
     });
-  };
+  }, [key]);
 
   return [value, set];
 }
