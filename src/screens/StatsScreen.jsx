@@ -12,11 +12,16 @@ export function StatsScreen({ sessions, program }) {
 
   const sortedKeys = Object.keys(sessions).sort((a, b) => b.localeCompare(a));
   let streak = 0;
+  let prevKey = today;
   for (const key of sortedKeys) {
     if (key > today) continue;
+    const expected = new Date(prevKey + "T12:00:00");
+    expected.setDate(expected.getDate() - 1);
+    if (key !== expected.toISOString().split("T")[0]) break;
     const s = sessions[key];
     if (s.type === "dynamique" || s.type === "statique") {
       streak++;
+      prevKey = key;
     } else {
       break;
     }

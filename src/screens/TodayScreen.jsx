@@ -25,6 +25,10 @@ export function TodayScreen({ sessions, saveSession, deleteSession, program, onO
   const cardio = session.cardio || [];
 
   const setType = (type) => {
+    const hasData = Object.values(exercises).some(arr => arr.length > 0) || cardio.length > 0;
+    if (hasData && session.type && session.type !== type) {
+      if (!confirm(`Changer le type effacera les données. Continuer ?`)) return;
+    }
     saveSession(selectedDate, { type, exercises: {}, cardio: [] });
   };
 
