@@ -21,6 +21,7 @@ export function TodayScreen({ sessions, saveSession, deleteSession, program, onO
   const isRest = sessionType === "repos";
   const isMatch = sessionType === "match";
   const isRestOrMatch = isRest || isMatch;
+  const isCardio = sessionType === "cardio";
   const isDynamic = sessionType === "dynamique";
 
   const suggestionColor = DAY_TYPES.find(dt => dt.id === suggestion.type)?.color;
@@ -144,6 +145,11 @@ export function TodayScreen({ sessions, saveSession, deleteSession, program, onO
               </div>
             )}
           </div>
+        ) : isCardio ? (
+          <>
+            <SectionLabel text="Cardio" />
+            <CardioSelector options={program.C} checked={cardio} onChange={setCardio} />
+          </>
         ) : (
           <>
             <SectionLabel text={isDynamic ? "Section A — Répétitions" : "Section B — Isométrie"} />

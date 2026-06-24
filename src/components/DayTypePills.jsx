@@ -3,6 +3,7 @@ export const DAY_TYPES = [
   { id: "statique",  label: "Statique",  color: "#8b5cf6" },
   { id: "repos",     label: "Repos",     color: "#6366f1" },
   { id: "match",     label: "Match",     color: "#10b981" },
+  { id: "cardio",   label: "Cardio",   color: "#06b6d4" },
 ];
 
 export function DayTypePills({ selected, onChange }) {
